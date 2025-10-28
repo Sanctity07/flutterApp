@@ -81,7 +81,7 @@ class _HomepageState extends State<Homepage> {
           IconButton(
             icon: const CircleAvatar(
               backgroundColor: Colors.white24,
-              child: Icon(Icons.person, color: Colors.white),
+              child: Icon(Icons.person, color: Colors.black),
             ),
             onPressed: () {
               showModalBottomSheet<void>(

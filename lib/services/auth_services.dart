@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:myapp/homepage.dart';
-import 'package:myapp/register.dart';
+import 'package:myapp/main.dart';
 
 class AuthServices {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -31,7 +31,7 @@ class AuthServices {
       }
 
       Fluttertoast.showToast(
-        msg: "Signup successful! Welcome $username 🎉",
+        msg: "Signup successful! Welcome $username",
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.green,
@@ -78,7 +78,7 @@ class AuthServices {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => RegisterPage()),
+      MaterialPageRoute(builder: (context) => MyApp()),
     );
   }
 }

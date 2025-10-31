@@ -107,8 +107,6 @@ class RegisterPage extends StatelessWidget {
                               password: _passwordController.text,
                               context: context,
                             );
-                            debugPrint("Firebase connection OK");
-
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,

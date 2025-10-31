@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/auth_services.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -55,7 +56,9 @@ class _HomepageState extends State<Homepage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () async {
+              await AuthServices().signOut(context);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -301,7 +304,7 @@ class _HomepageState extends State<Homepage> {
                               ),
                             );
                           },
-                        ), 
+                        ),
                 ),
               ),
             ],
@@ -318,7 +321,7 @@ class _HomepageState extends State<Homepage> {
   void _showTaskOptions(Task task) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (c) => Padding( 
+      builder: (c) => Padding(
         padding: const EdgeInsets.all(12.0),
         child: Wrap(
           children: [
@@ -351,7 +354,7 @@ class _HomepageState extends State<Homepage> {
 
   void _showEditDialog(Task task) {
     final controller = TextEditingController(text: task.title);
-    showDialog<void>( 
+    showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
         title: const Text('Edit Task'),
@@ -423,7 +426,7 @@ class FeatureCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column( 
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:myapp/homepage.dart';
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+   LoginPage({super.key});
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +54,9 @@ class LoginPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
                       TextField(
+                        controller: _emailController,
                         decoration: InputDecoration(
-                          hintText: "Enter Usernmae",
+                          hintText: "Enter email",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
@@ -60,6 +65,7 @@ class LoginPage extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       TextField(
+                        controller: _passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: "Enter Password",

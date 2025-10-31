@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/homepage.dart';
 import 'package:myapp/login.dart';
+import 'services/auth_services.dart';
 
 class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
+  RegisterPage({super.key});
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,7 @@ class RegisterPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
                       TextField(
+                        controller: _emailController,
                         decoration: InputDecoration(
                           hintText: "Enter Email",
                           border: OutlineInputBorder(
@@ -61,8 +66,9 @@ class RegisterPage extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       TextField(
+                        controller: _nameController,
                         decoration: InputDecoration(
-                          hintText: "Enter Usernmae",
+                          hintText: "Enter Username",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
@@ -71,6 +77,7 @@ class RegisterPage extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       TextField(
+                        controller: _passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: "Enter Password",
@@ -93,12 +100,15 @@ class RegisterPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const Homepage()
-                              ),
+                          onPressed: () async {
+                            await AuthServices().signup(
+                              username: _nameController.text,
+                              email: _emailController.text,
+                              password: _passwordController.text,
+                              context: context,
                             );
+                            debugPrint("Firebase connection OK");
+
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
@@ -123,7 +133,9 @@ class RegisterPage extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                            MaterialPageRoute(
+                              builder: (context) => LoginPage(),
+                            ),
                           );
                         },
                         child: const Text(
@@ -131,7 +143,6 @@ class RegisterPage extends StatelessWidget {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-
                     ],
                   ),
                 ),

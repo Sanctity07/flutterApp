@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'services/auth_services.dart';
 
@@ -29,12 +31,42 @@ class _HomepageState extends State<Homepage> {
     ),
   ];
 
+  String? username;
+  String? email;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  ///  Fetch username & email from Firestore
+  Future<void> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (doc.exists) {
+      setState(() {
+        username = doc['username'];
+        email = doc['email'];
+      });
+    } else {
+      // fallback if Firestore data doesn't exist
+      setState(() {
+        username = FirebaseAuth.instance.currentUser?.displayName ?? "User";
+        email = FirebaseAuth.instance.currentUser?.email;
+      });
+    }
+  }
+
   void _addTask(String title) {
     if (title.trim().isEmpty) return;
     setState(() => _tasks.insert(0, Task(title)));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Added "$title"')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Added "$title"')));
   }
 
   void _showAddDialog() {
@@ -46,9 +78,7 @@ class _HomepageState extends State<Homepage> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'What do you want to add?',
-          ),
+          decoration: const InputDecoration(hintText: 'What do you want to add?'),
           onSubmitted: (v) {
             Navigator.of(context).pop();
             _addTask(v);
@@ -56,9 +86,7 @@ class _HomepageState extends State<Homepage> {
         ),
         actions: [
           TextButton(
-            onPressed: () async {
-              await AuthServices().signOut(context);
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -75,79 +103,19 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('To-Do List'),
         centerTitle: true,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const CircleAvatar(
               backgroundColor: Colors.white24,
               child: Icon(Icons.person, color: Colors.black),
             ),
-            onPressed: () {
-              showModalBottomSheet<void>(
-                context: context,
-                builder: (c) => Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Profile',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: const [
-                          CircleAvatar(radius: 28, child: Icon(Icons.person)),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Lucky',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  'lucky@example.com',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.logout),
-                            label: const Text('Sign out'),
-                          ),
-                          const SizedBox(width: 8),
-                          OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close),
-                            label: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+            onPressed: () => _showProfileSheet(currentUser),
           ),
         ],
       ),
@@ -172,16 +140,16 @@ class _HomepageState extends State<Homepage> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Welcome back, Lucky!',
-                              style: TextStyle(
+                              'Welcome back, ${username ?? "Loading..."}!',
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
+                            const SizedBox(height: 4),
+                            const Text(
                               'Here are your quick actions and tasks',
                               style: TextStyle(color: Colors.black54),
                             ),
@@ -204,10 +172,9 @@ class _HomepageState extends State<Homepage> {
               const Text(
                 'Features',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -220,11 +187,9 @@ class _HomepageState extends State<Homepage> {
                     final f = _features[index];
                     return FeatureCard(
                       feature: f,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Opened ${f.title}')),
-                        );
-                      },
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Opened ${f.title}')),
+                      ),
                     );
                   },
                 ),
@@ -233,10 +198,9 @@ class _HomepageState extends State<Homepage> {
               const Text(
                 'Tasks',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Expanded(
@@ -254,7 +218,8 @@ class _HomepageState extends State<Homepage> {
                         )
                       : ListView.separated(
                           itemCount: _tasks.length,
-                          separatorBuilder: (_, __) => const Divider(height: 0),
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 0),
                           itemBuilder: (context, index) {
                             final task = _tasks[index];
                             return Dismissible(
@@ -262,25 +227,24 @@ class _HomepageState extends State<Homepage> {
                               background: Container(
                                 color: Colors.red,
                                 alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.only(left: 20),
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
+                                padding:
+                                    const EdgeInsets.only(left: 20),
+                                child: const Icon(Icons.delete,
+                                    color: Colors.white),
                               ),
                               secondaryBackground: Container(
                                 color: Colors.red,
                                 alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
+                                padding:
+                                    const EdgeInsets.only(right: 20),
+                                child: const Icon(Icons.delete,
+                                    color: Colors.white),
                               ),
                               onDismissed: (_) {
                                 setState(() => _tasks.removeAt(index));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Task deleted')),
+                                  const SnackBar(
+                                      content: Text('Task deleted')),
                                 );
                               },
                               child: ListTile(
@@ -294,12 +258,13 @@ class _HomepageState extends State<Homepage> {
                                 ),
                                 leading: Checkbox(
                                   value: task.done,
-                                  onChanged: (v) =>
-                                      setState(() => task.done = v ?? false),
+                                  onChanged: (v) => setState(
+                                      () => task.done = v ?? false),
                                 ),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.more_vert),
-                                  onPressed: () => _showTaskOptions(task),
+                                  onPressed: () =>
+                                      _showTaskOptions(task),
                                 ),
                               ),
                             );
@@ -314,6 +279,66 @@ class _HomepageState extends State<Homepage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showProfileSheet(User? user) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (c) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Profile',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const CircleAvatar(radius: 28, child: Icon(Icons.person)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        username ?? "Loading...",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        email ?? user?.email ?? "",
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await AuthServices().signOut(context);
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sign out'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                  label: const Text('Close'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -430,15 +455,12 @@ class FeatureCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    feature.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  Text(feature.title,
+                      style:
+                          const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  Text(
-                    feature.subtitle,
-                    style: const TextStyle(color: Colors.black54),
-                  ),
+                  Text(feature.subtitle,
+                      style: const TextStyle(color: Colors.black54)),
                 ],
               ),
             ),

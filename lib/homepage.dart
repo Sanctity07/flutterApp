@@ -40,23 +40,28 @@ class _HomepageState extends State<Homepage> {
     _loadUserData();
   }
 
-  ///  Fetch username & email from Firestore
+  /// Fetch username & email from Firestore
   Future<void> _loadUserData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-    if (doc.exists) {
+      if (doc.exists) {
+        setState(() {
+          username = doc['username'];
+          email = doc['email'];
+        });
+      } else {
+        setState(() {
+          username = FirebaseAuth.instance.currentUser?.displayName ?? "User";
+          email = FirebaseAuth.instance.currentUser?.email;
+        });
+      }
+    } catch (e) {
       setState(() {
-        username = doc['username'];
-        email = doc['email'];
-      });
-    } else {
-      // fallback if Firestore data doesn't exist
-      setState(() {
-        username = FirebaseAuth.instance.currentUser?.displayName ?? "User";
+        username = "User";
         email = FirebaseAuth.instance.currentUser?.email;
       });
     }
@@ -65,20 +70,23 @@ class _HomepageState extends State<Homepage> {
   void _addTask(String title) {
     if (title.trim().isEmpty) return;
     setState(() => _tasks.insert(0, Task(title)));
+
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text('Added "$title"')));
   }
 
   void _showAddDialog() {
     final controller = TextEditingController();
-    showDialog<void>(
+    showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add Task'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'What do you want to add?'),
+          decoration: const InputDecoration(
+            hintText: 'What do you want to add?',
+          ),
           onSubmitted: (v) {
             Navigator.of(context).pop();
             _addTask(v);
@@ -126,6 +134,7 @@ class _HomepageState extends State<Homepage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /// PROFILE CARD
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -168,13 +177,17 @@ class _HomepageState extends State<Homepage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 16),
+
+              /// FEATURES
               const Text(
                 'Features',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -194,15 +207,20 @@ class _HomepageState extends State<Homepage> {
                   },
                 ),
               ),
+
               const SizedBox(height: 16),
+
+              /// TASKS
               const Text(
                 'Tasks',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
+
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
@@ -218,8 +236,7 @@ class _HomepageState extends State<Homepage> {
                         )
                       : ListView.separated(
                           itemCount: _tasks.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 0),
+                          separatorBuilder: (_, __) => const Divider(height: 0),
                           itemBuilder: (context, index) {
                             final task = _tasks[index];
                             return Dismissible(
@@ -227,24 +244,21 @@ class _HomepageState extends State<Homepage> {
                               background: Container(
                                 color: Colors.red,
                                 alignment: Alignment.centerLeft,
-                                padding:
-                                    const EdgeInsets.only(left: 20),
-                                child: const Icon(Icons.delete,
-                                    color: Colors.white),
+                                padding: const EdgeInsets.only(left: 20),
+                                child:
+                                    const Icon(Icons.delete, color: Colors.white),
                               ),
                               secondaryBackground: Container(
                                 color: Colors.red,
                                 alignment: Alignment.centerRight,
-                                padding:
-                                    const EdgeInsets.only(right: 20),
-                                child: const Icon(Icons.delete,
-                                    color: Colors.white),
+                                padding: const EdgeInsets.only(right: 20),
+                                child:
+                                    const Icon(Icons.delete, color: Colors.white),
                               ),
                               onDismissed: (_) {
                                 setState(() => _tasks.removeAt(index));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Task deleted')),
+                                  const SnackBar(content: Text('Task deleted')),
                                 );
                               },
                               child: ListTile(
@@ -258,13 +272,12 @@ class _HomepageState extends State<Homepage> {
                                 ),
                                 leading: Checkbox(
                                   value: task.done,
-                                  onChanged: (v) => setState(
-                                      () => task.done = v ?? false),
+                                  onChanged: (v) =>
+                                      setState(() => task.done = v ?? false),
                                 ),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.more_vert),
-                                  onPressed: () =>
-                                      _showTaskOptions(task),
+                                  onPressed: () => _showTaskOptions(task),
                                 ),
                               ),
                             );
@@ -276,6 +289,7 @@ class _HomepageState extends State<Homepage> {
           ),
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         child: const Icon(Icons.add),
@@ -283,11 +297,12 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  /// PROFILE BOTTOM SHEET
   void _showProfileSheet(User? user) {
-    showModalBottomSheet<void>(
+    showModalBottomSheet(
       context: context,
-      builder: (c) => Padding(
-        padding: const EdgeInsets.all(16.0),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,7 +311,8 @@ class _HomepageState extends State<Homepage> {
               'Profile',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+
             Row(
               children: [
                 const CircleAvatar(radius: 28, child: Icon(Icons.person)),
@@ -308,7 +324,9 @@ class _HomepageState extends State<Homepage> {
                       Text(
                         username ?? "Loading...",
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(
                         email ?? user?.email ?? "",
@@ -319,7 +337,9 @@ class _HomepageState extends State<Homepage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+
+            const SizedBox(height: 16),
+
             Row(
               children: [
                 ElevatedButton.icon(
@@ -329,7 +349,7 @@ class _HomepageState extends State<Homepage> {
                   icon: const Icon(Icons.logout),
                   label: const Text('Sign out'),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
@@ -343,11 +363,12 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  /// TASK OPTIONS BOTTOM SHEET
   void _showTaskOptions(Task task) {
-    showModalBottomSheet<void>(
+    showModalBottomSheet(
       context: context,
-      builder: (c) => Padding(
-        padding: const EdgeInsets.all(12.0),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(12),
         child: Wrap(
           children: [
             ListTile(
@@ -377,11 +398,13 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  /// EDIT TASK DIALOG
   void _showEditDialog(Task task) {
     final controller = TextEditingController(text: task.title);
-    showDialog<void>(
+
+    showDialog(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('Edit Task'),
         content: TextField(
           controller: controller,
@@ -411,7 +434,7 @@ class _HomepageState extends State<Homepage> {
 
 class Task {
   Task(this.title) : id = UniqueKey().toString();
-  String id;
+  final String id;
   String title;
   bool done = false;
 }
@@ -420,6 +443,7 @@ class Feature {
   final IconData icon;
   final String title;
   final String subtitle;
+
   const Feature({
     required this.icon,
     required this.title,
@@ -430,6 +454,7 @@ class Feature {
 class FeatureCard extends StatelessWidget {
   final Feature feature;
   final VoidCallback? onTap;
+
   const FeatureCard({super.key, required this.feature, this.onTap});
 
   @override
@@ -453,14 +478,16 @@ class FeatureCard extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(feature.title,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    feature.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 6),
-                  Text(feature.subtitle,
-                      style: const TextStyle(color: Colors.black54)),
+                  Text(
+                    feature.subtitle,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
                 ],
               ),
             ),
